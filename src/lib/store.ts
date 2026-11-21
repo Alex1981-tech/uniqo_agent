@@ -7,7 +7,6 @@ export interface Settings {
   token: string | null;
   userName: string | null;
   expiresAt: string | null;
-  sound: boolean;
 }
 
 export const DEFAULTS: Settings = {
@@ -16,7 +15,6 @@ export const DEFAULTS: Settings = {
   token: null,
   userName: null,
   expiresAt: null,
-  sound: true,
 };
 
 let store: Store | null = null;

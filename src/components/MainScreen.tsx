@@ -109,7 +109,10 @@ export function MainScreen({ userName, expiresAt, state, unread, server, sound, 
 
       <section className="section">
         <label className="row">
-          <span className="row-text">Звук сповіщень</span>
+          <span className="row-text">
+            <span>Звук сповіщень</span>
+            <span className="muted small">Звук для кожного каналу — у налаштуваннях чатів CC</span>
+          </span>
           <input type="checkbox" className="switch" checked={sound} onChange={e => onSound(e.target.checked)} />
         </label>
         <label className="row">

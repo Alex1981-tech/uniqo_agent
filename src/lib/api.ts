@@ -44,6 +44,8 @@ export interface Channel {
 }
 export const channelKey = (c: Pick<Channel, 'type' | 'id'>) => `${c.type}:${c.id}`;
 
+import type { SoundPrefs } from './sounds';
+
 export const api = {
   qrStart: (deviceName: string) => call<QrStart>('/api/agent/auth/qr/start/', { method: 'POST', body: JSON.stringify({ device_name: deviceName }) }),
   qrStatus: (t: string, secret: string, deviceName: string) =>
@@ -51,6 +53,9 @@ export const api = {
   me: () => call<Me>('/api/agent/me/'),
   logout: () => call<{ status: string }>('/api/agent/auth/logout/', { method: 'POST' }),
   channels: () => call<{ channels: Channel[]; hidden: string[] }>('/api/messenger/chat-channels/'),
+  sounds: () => call<SoundPrefs>('/api/messenger/notification-sounds/'),
+  setSoundsEnabled: (enabled: boolean) =>
+    call<SoundPrefs>('/api/messenger/notification-sounds/', { method: 'PUT', body: JSON.stringify({ enabled }) }),
   setHidden: (hidden: string[]) =>
     call<{ channels: Channel[]; hidden: string[] }>('/api/messenger/chat-channels/', { method: 'PUT', body: JSON.stringify({ hidden }) }),
 };

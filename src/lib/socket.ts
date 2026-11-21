@@ -8,6 +8,7 @@ export interface AgentNotice {
   subtitle: string;
   body: string;
   client_id: string;
+  account_id?: string;
   url: string;
   unread: number | null;
 }

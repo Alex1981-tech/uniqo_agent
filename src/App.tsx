@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { enable as enableAutostart } from '@tauri-apps/plugin-autostart';
 import { api, ApiError, configureApi, type Me } from './lib/api';
 import { createDeduper } from './lib/notices';
+import { DEFAULT_SOUND_PREFS, soundFor, type SoundPrefs } from './lib/sounds';
 import { connectAgent, type SocketState } from './lib/socket';
 import { DEFAULTS, loadSettings, saveSettings, type Settings } from './lib/store';
 import { startAutoUpdate } from './lib/updater';
@@ -13,13 +14,14 @@ export function App() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [state, setState] = useState<SocketState>('connecting');
   const [unread, setUnread] = useState<number | null>(null);
-  const soundRef = useRef(DEFAULTS.sound);
+  // Звуки — налаштування людини у вебі; тут лише читаємо (і вмикаємо/вимикаємо загалом)
+  const [sounds, setSounds] = useState<SoundPrefs>(DEFAULT_SOUND_PREFS);
+  const soundsRef = useRef<SoundPrefs>(DEFAULT_SOUND_PREFS);
   const fresh = useRef(createDeduper());
 
   useEffect(() => {
     loadSettings().then(s => {
       configureApi(s.server, s.token);
-      soundRef.current = s.sound;
       setSettings(s);
     });
     return startAutoUpdate();
@@ -50,6 +52,15 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
+  const applySounds = (p: SoundPrefs) => { soundsRef.current = p; setSounds(p); };
+  useEffect(() => {
+    if (!token) return;
+    const load = () => api.sounds().then(applySounds).catch(() => {});
+    void load();
+    const t = setInterval(load, 60_000);  // змінили звук у вебі — підхопимо за хвилину
+    return () => clearInterval(t);
+  }, [token]);
+
   // З'єднання й сповіщення
   useEffect(() => {
     if (!token || !settings) return;
@@ -64,7 +75,12 @@ export function App() {
       },
       onNotice: n => {
         if (!fresh.current(n.id)) return;
-        void invoke('notify', { title: n.title, subtitle: n.subtitle, body: n.body, url: n.url, sound: soundRef.current });
+        const src = soundFor(soundsRef.current, n.account_id);
+        const toast = (systemSound: boolean) =>
+          invoke('notify', { title: n.title, subtitle: n.subtitle, body: n.body, url: n.url, sound: systemSound });
+        if (!src) { void toast(false); return; }
+        // Звук каналу як у вебі; не вдалося зіграти — хоч системний звук сповіщення
+        new Audio(src).play().then(() => toast(false), () => toast(true));
       },
       onLoggedOut: () => { void signedOut('Вхід закінчився або його відкликали'); },
     });
@@ -92,8 +108,11 @@ export function App() {
       state={state}
       unread={unread}
       server={settings.server}
-      sound={settings.sound}
-      onSound={on => { soundRef.current = on; patch({ sound: on }); }}
+      sound={sounds.enabled}
+      onSound={on => {
+        applySounds({ ...soundsRef.current, enabled: on });
+        api.setSoundsEnabled(on).then(applySounds).catch(() => applySounds({ ...soundsRef.current, enabled: !on }));
+      }}
       onLogout={() => { api.logout().catch(() => {}).finally(() => { void signedOut(); }); }}
     />
   );
