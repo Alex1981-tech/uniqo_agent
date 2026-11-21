@@ -1,0 +1,39 @@
+[package]
+name = "uniqo-notify"
+version = "0.1.0"
+description = "UNIQO Сповіщення — системні сповіщення про нові повідомлення"
+authors = ["UNIQO"]
+license = "MIT"
+repository = "https://github.com/Alex1981-tech/uniqo_agent"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.6", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.10.3", features = ["tray-icon", "image-png"] }
+tauri-plugin-log = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+tauri-plugin-http = "=2.5.9"  # JS @tauri-apps/plugin-http 2.5.9 — версії мають збігатися (урок UNIQO Agent 0.3.x)
+tauri-plugin-store = "2"
+tauri-plugin-os = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-opener = "2"
+
+# Сповіщення Windows з кліком: tauri-plugin-notification на десктопі клік не повідомляє
+[target.'cfg(windows)'.dependencies]
+tauri-winrt-notification = "0.8"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
