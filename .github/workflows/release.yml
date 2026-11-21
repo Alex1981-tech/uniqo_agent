@@ -67,7 +67,8 @@ jobs:
           # upload. productName «UNIQO Сповіщення» (пробіл, кирилиця) → asset стає
           # «UNIQO.…» а URL з %20 → 404 при auto-update.
           # Нормалізуємо ім'я ДО створення zip, щоб asset і URL збігались.
-          $nsisZipName = ($nsisExe.BaseName + ".nsis.zip") -replace '[^A-Za-z0-9._-]', '.'
+          # Латинська назва: кирилицю продукту GitHub стискає в одну крапку, і URL у latest.json давав 404 (0.1.0)
+          $nsisZipName = "uniqo-notify_${version}_x64-setup.nsis.zip"
           $nsisZipPath = Join-Path $nsisExe.DirectoryName $nsisZipName
           Add-Type -Assembly System.IO.Compression
           Add-Type -Assembly System.IO.Compression.FileSystem
